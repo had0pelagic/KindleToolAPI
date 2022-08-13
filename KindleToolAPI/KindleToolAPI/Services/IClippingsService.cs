@@ -1,7 +1,10 @@
-﻿namespace KindleToolAPI.Services
+﻿using KindleToolAPI.DTOs;
+using Microsoft.AspNetCore.Mvc;
+
+namespace KindleToolAPI.Services
 {
     public interface IClippingsService
     {
-        public Task<string> ClippingsToJson();
+        public Task<FileContentResult> ClippingsToJson(ClippingsFileDto dto);
     }
 }
