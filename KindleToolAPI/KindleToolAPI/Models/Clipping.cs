@@ -1,6 +1,5 @@
 ﻿namespace KindleToolAPI.Models
 {
-    [Serializable]
     public class Clipping
     {
         public string Title { get; set; }

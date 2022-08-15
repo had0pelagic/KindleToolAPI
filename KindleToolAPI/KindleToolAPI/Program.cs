@@ -6,6 +6,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IClippingsService, ClippingsService>();
+builder.Services.AddScoped<INotionService, NotionService>();
 builder.Services.AddCors(c => c.AddPolicy("Cors", policy =>
 {
     policy.AllowAnyHeader();
