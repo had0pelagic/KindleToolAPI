@@ -15,6 +15,7 @@ namespace KindleToolAPI.Services
         /// <returns></returns>
         public async Task<string> AddPage(NotionClient client, string databaseId, string titleName)
         {
+            //check if one exists with the same name
             var pageCreateParameters = PagesCreateParametersBuilder.Create(new DatabaseParentInput
             {
                 DatabaseId = databaseId
@@ -45,11 +46,11 @@ namespace KindleToolAPI.Services
         /// <param name="titleName"></param>
         /// <param name="text"></param>
         /// <returns></returns>
-        public async Task<string> AddChildPage(NotionClient client, string pageId, string titleName, string text)
+        public async Task<string> AddChildPage(NotionClient client, string parentPageId, string titleName)
         {
             var pageCreateParameters = PagesCreateParametersBuilder.Create(new ParentPageInput
             {
-                PageId = pageId
+                PageId = parentPageId
             }).AddProperty("title", new TitlePropertyValue()
             {
                 Title = new List<RichTextBase>()
@@ -63,13 +64,6 @@ namespace KindleToolAPI.Services
                     }
                 }
             }).Build();
-
-            var blocks = new List<IBlock>()
-            {
-                Blocks.GetParagraphBlock(text)
-            };
-
-            pageCreateParameters.Children = blocks;
 
             var page = await client.Pages.CreateAsync(pageCreateParameters);
 
@@ -131,6 +125,31 @@ namespace KindleToolAPI.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public async Task<bool> ContainsDuplicateParagraph(NotionClient client, string pageId, string text)
+        {
+            var blocks = await client.Blocks.RetrieveChildrenAsync(pageId, new BlocksRetrieveChildrenParameters());
+
+            foreach (var block in blocks.Results)
+            {
+                if (block is not ParagraphBlock paragraph)
+                {
+                    continue;
+                }
+                if (text == paragraph.Paragraph.RichText.FirstOrDefault()?.PlainText)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
