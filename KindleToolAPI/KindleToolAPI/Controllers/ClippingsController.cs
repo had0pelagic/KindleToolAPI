@@ -1,5 +1,6 @@
 ﻿using KindleToolAPI.DTOs;
 using KindleToolAPI.Services;
+using KindleToolAPI.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KindleToolAPI.Controllers
@@ -23,13 +24,8 @@ namespace KindleToolAPI.Controllers
         [HttpPost("/clippings-json")]
         public async Task<FileContentResult> ClippingsToJson([FromForm] ClippingsFileDto dto)
         {
-            return await _clippingsService.ClippingsToJson(dto);
-        }
-
-        [HttpGet("/test")]
-        public async Task<ActionResult<string>> Test()
-        {
-            return Ok("Test");
+            var clippings = await _clippingsService.GetClippings(dto);
+            return clippings.ToTextFile("ClippingsJson");
         }
     }
 }

@@ -1,9 +1,7 @@
 ﻿using KindleToolAPI.DTOs;
-using KindleToolAPI.Extensions;
 using KindleToolAPI.Models;
 using KindleToolAPI.Util.Constants;
 using KindleToolAPI.Util.Enums;
-using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -18,7 +16,7 @@ namespace KindleToolAPI.Services
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
-        public async Task<FileContentResult> ClippingsToJson(ClippingsFileDto dto)
+        public async Task<List<Clipping>> GetClippings(ClippingsFileDto dto)
         {
             var clippings = new List<Clipping>();
             var clipping = new Clipping();
@@ -62,7 +60,7 @@ namespace KindleToolAPI.Services
                 lineNumber++;
             }
 
-            return clippings.ToTextFile("ClippingsJson");
+            return clippings;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using KindleToolAPI.Services;
+﻿using KindleToolAPI.DTOs;
+using KindleToolAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KindleToolAPI.Controllers
@@ -13,10 +14,10 @@ namespace KindleToolAPI.Controllers
             _notionService = notionService;
         }
 
-        [HttpGet("/test1")]
-        public async Task<ActionResult<string>> Test(string secret, string databaseId)
+        [HttpPost("/clippings-notion")]
+        public async Task ClippingsToJson([FromForm] ClippingsFileDto dto, string secret, string databaseId)
         {
-            return Ok(await _notionService.Test(secret, databaseId));
+            await _notionService.AddClippingsToNotion(dto, secret, databaseId);
         }
     }
 }

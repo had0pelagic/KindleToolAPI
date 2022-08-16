@@ -1,59 +1,58 @@
-﻿using KindleToolAPI.Util.Notion;
+﻿using KindleToolAPI.DTOs;
+using KindleToolAPI.Util.Notion;
 using Notion.Client;
 
 namespace KindleToolAPI.Services
 {
     public class NotionService : INotionService
     {
-        private readonly INotionDatabaseService _databaseService;
         private readonly INotionPageService _pageService;
+        private readonly IClippingsService _clippingsService;
 
-        public NotionService(INotionDatabaseService databaseService, INotionPageService pageService)
+        public NotionService(INotionPageService pageService, IClippingsService clippingsService)
         {
-            _databaseService = databaseService;
             _pageService = pageService;
+            _clippingsService = clippingsService;
         }
 
-        public async Task<string> Test(string key, string databaseId)
+        public async Task AddClippingsToNotion(ClippingsFileDto dto, string secret, string databaseId)
         {
+            var clippings = await _clippingsService.GetClippings(dto);
+
+            if (clippings.Count == 0)
+            {
+                return;
+            }
+
             var client = NotionClientFactory.Create(new ClientOptions
             {
-                AuthToken = key
+                AuthToken = secret
             });
 
-            var authorTitle = "Author with his book name";
-            var childPageName = "2022-02-02 + author and his book name";
+            foreach (var clipping in clippings)
+            {
+                var authorTitle = $"{clipping.Title} {clipping.Author}";
+                var childPageName = $"{clipping.AddedOn} {clipping.Title}";
 
-            //check if page exists with name
-            var parentPageId = await _pageService.PageExistsByName(client, authorTitle);
-            if (parentPageId == null)
-            {
-                parentPageId = await _pageService.AddPage(client, databaseId, authorTitle);
-            }
-            //check if child page exists with name
-            var childPageId = await _pageService.PageExistsByName(client, childPageName);
-            if (childPageId == null)
-            {
-                childPageId = await _pageService.AddChildPage(client, parentPageId, childPageName);
-            }
+                var parentPageId = await _pageService.PageExistsByName(client, authorTitle);
+                if (parentPageId == null)
+                {
+                    parentPageId = await _pageService.AddPage(client, databaseId, authorTitle);
+                }
 
-            var texts = new List<string>()
-            {
-                "“Remember, no man is a failure who has friends.”",
-                "If you don't have health, you lack wealth.",
-                "If you don't have health, you lack wealth."
-            };
+                var childPageId = await _pageService.PageExistsByName(client, childPageName);
+                if (childPageId == null)
+                {
+                    childPageId = await _pageService.AddChildPage(client, parentPageId, childPageName);
+                }
 
-            foreach (var text in texts)
-            {
-                if (await _pageService.ContainsDuplicateParagraph(client, childPageId, text))
+                if (await _pageService.ContainsDuplicateParagraph(client, childPageId, clipping.Text))
                 {
                     continue;
                 }
-                await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(text));
-            }
 
-            return "test";
+                await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(clipping.Text));
+            }
         }
     }
 }
