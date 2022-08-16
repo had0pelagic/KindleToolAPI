@@ -7,7 +7,7 @@ namespace KindleToolAPI.Services
         private readonly INotionDatabaseService _databaseService;
         private readonly INotionPageService _pageService;
 
-        public NotionService(INotionDatabaseService databaseService,INotionPageService pageService)
+        public NotionService(INotionDatabaseService databaseService, INotionPageService pageService)
         {
             _databaseService = databaseService;
             _pageService = pageService;
@@ -20,10 +20,7 @@ namespace KindleToolAPI.Services
                 AuthToken = key
             });
 
-            //var pageId = await AddNewPage(client, databaseId, "Page!");
-            //await AppendBlockToPage(client, pageId, Blocks.GetHeadingOneBlock("Heading one block!"));
-            //await QueryDatabase(client, databaseId);
-            var res = await _databaseService.ContainsTitle(client, databaseId, "Books", "Book 1");
+            var pageId = await _pageService.PageExistsByName(client, "12321");
 
             return "test";
         }

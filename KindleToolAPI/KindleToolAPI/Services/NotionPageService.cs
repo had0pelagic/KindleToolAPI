@@ -13,7 +13,7 @@ namespace KindleToolAPI.Services
         /// <param name="databaseId"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public async Task<string> AddNewPage(NotionClient client, string databaseId, string titleName)
+        public async Task<string> AddPage(NotionClient client, string databaseId, string titleName)
         {
             var pageCreateParameters = PagesCreateParametersBuilder.Create(new DatabaseParentInput
             {
@@ -35,6 +35,102 @@ namespace KindleToolAPI.Services
             var page = await client.Pages.CreateAsync(pageCreateParameters);
 
             return page.Id;
+        }
+
+        /// <summary>
+        /// Adds child page to given page
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="databaseId"></param>
+        /// <param name="titleName"></param>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public async Task<string> AddChildPage(NotionClient client, string pageId, string titleName, string text)
+        {
+            var pageCreateParameters = PagesCreateParametersBuilder.Create(new ParentPageInput
+            {
+                PageId = pageId
+            }).AddProperty("title", new TitlePropertyValue()
+            {
+                Title = new List<RichTextBase>()
+                {
+                    new RichTextText()
+                    {
+                        Text = new Text()
+                        {
+                            Content = titleName
+                        }
+                    }
+                }
+            }).Build();
+
+            var blocks = new List<IBlock>()
+            {
+                Blocks.GetParagraphBlock(text)
+            };
+
+            pageCreateParameters.Children = blocks;
+
+            var page = await client.Pages.CreateAsync(pageCreateParameters);
+
+            return page.Id;
+        }
+
+        /// <summary>
+        /// Checks if page exists with given id
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="pageId"></param>
+        /// <returns></returns>
+        public async Task<bool> PageExistsById(NotionClient client, string pageId)
+        {
+            var search = await client.Search.SearchAsync(new SearchParameters());
+
+            foreach (var item in search.Results)
+            {
+                if (item is not Page page)
+                {
+                    continue;
+                }
+
+                var id = page.Id.Replace("-", "");
+                if (id == pageId || page.Id == pageId)
+                {
+                    return true;
+                }
+                continue;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Check if page exists with given name and returns it's name
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public async Task<string?> PageExistsByName(NotionClient client, string name)
+        {
+            var search = await client.Search.SearchAsync(new SearchParameters());
+
+            foreach (var item in search.Results)
+            {
+                if (item is not Page page)
+                {
+                    continue;
+                }
+
+                foreach (var property in page.Properties)
+                {
+                    if (property.Value is TitlePropertyValue titlePropertyValue && titlePropertyValue.Title.FirstOrDefault()?.PlainText == name)
+                    {
+                        return item.Id;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -142,6 +238,24 @@ namespace KindleToolAPI.Services
                 };
 
                 await client.Blocks.AppendChildrenAsync(result.Id, blocks);
+            }
+        }
+
+        /// <summary>
+        /// Returns property value based on type
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private object GetValue(PropertyValue value)
+        {
+            switch (value)
+            {
+                case RichTextPropertyValue richTextPropertyValue://text type
+                    return richTextPropertyValue.RichText.FirstOrDefault()?.PlainText;
+                case TitlePropertyValue titlePropertyValue://title type
+                    return titlePropertyValue.Title.FirstOrDefault()?.PlainText;
+                default:
+                    return null;
             }
         }
     }
