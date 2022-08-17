@@ -2,6 +2,7 @@
 using KindleToolAPI.Models;
 using KindleToolAPI.Util.Constants;
 using KindleToolAPI.Util.Enums;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -41,7 +42,7 @@ namespace KindleToolAPI.Services
                 {
                     GetType(line, clipping);
                     GetLocation(line, clipping);
-                    GetDate(line, clipping);
+                    GetFullDate(line, clipping);
                 }
                 else if (line == ClippingConstants.TextSeparator)
                 {
@@ -74,8 +75,8 @@ namespace KindleToolAPI.Services
 
             if (match.Success)
             {
-                clipping.Title = match.Groups[1].Value;
-                clipping.Author = match.Groups[2].Value;
+                clipping.Title = match.Groups[1].Value.Trim();
+                clipping.Author = match.Groups[2].Value.Trim();
             }
             else
             {
@@ -121,11 +122,34 @@ namespace KindleToolAPI.Services
                 var locationFrom = line.IndexOf("location") + "location ".Length;
                 var locationTo = line.IndexOf("|") - locationFrom - 1;
 
-                clipping.Location = line.Substring(locationFrom, locationTo);
+                clipping.Location = line.Substring(locationFrom, locationTo).Trim();
             }
             else
             {
                 clipping.Location = "None";
+            }
+        }
+
+        /// <summary>
+        /// Extracts full date from given text
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="clipping"></param>
+        private static void GetFullDate(string line, Clipping clipping)
+        {
+            if (line.Contains("Added on"))
+            {
+                var dateFrom = line.IndexOf("|") + "| ".Length;
+                var dateTo = line.Length - dateFrom;
+
+                var addedOn = line.Substring(dateFrom, dateTo);
+                clipping.AddedOn = addedOn;
+
+                GetDate(addedOn, clipping);
+            }
+            else
+            {
+                clipping.AddedOn = "None";
             }
         }
 
@@ -136,16 +160,28 @@ namespace KindleToolAPI.Services
         /// <param name="clipping"></param>
         private static void GetDate(string line, Clipping clipping)
         {
-            if (line.Contains("Added on"))
-            {
-                var dateFrom = line.IndexOf("|") + "| ".Length;
-                var dateTo = line.Length - dateFrom;
+            var matchAddedOn = new Regex(ClippingConstants.AddedOnRegex).Match(line);
+            var matchTime = new Regex(ClippingConstants.DateRegex).Match(line);
 
-                clipping.AddedOn = line.Substring(dateFrom, dateTo);
+            if (matchAddedOn.Success && matchTime.Success)
+            {
+                line = line.Replace(matchAddedOn.ToString(), string.Empty);
+                line = line.Replace(matchTime.ToString(), string.Empty);
+
+                var dateSplit = line.Trim().Split(' ');
+                if (!(dateSplit.Length == 3 && dateSplit[0].Length > 0 && dateSplit[1].Length > 0 && dateSplit[2].Length > 0))
+                {
+                    clipping.Date = new DateOnly();
+                }
+
+                var month = DateOnly.ParseExact(dateSplit[1], "MMMM", CultureInfo.CurrentCulture).Month;
+                var date = new DateOnly(int.Parse(dateSplit[2]), month, int.Parse(dateSplit[0]));
+
+                clipping.Date = date;
             }
             else
             {
-                clipping.Location = "None";
+                clipping.Date = new DateOnly();
             }
         }
     }

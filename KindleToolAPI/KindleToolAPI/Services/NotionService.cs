@@ -31,8 +31,8 @@ namespace KindleToolAPI.Services
 
             foreach (var clipping in clippings)
             {
-                var authorTitle = $"{clipping.Title} {clipping.Author}";
-                var childPageName = $"{clipping.AddedOn} {clipping.Title}";
+                var authorTitle = $"{clipping.Title} ({clipping.Author})";
+                var childPageName = $"{clipping.Date} - {clipping.Title}";
 
                 var parentPageId = await _pageService.PageExistsByName(client, authorTitle);
                 if (parentPageId == null)
