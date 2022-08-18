@@ -17,7 +17,7 @@ namespace KindleToolAPI.Services
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
-        public async Task<List<Clipping>> GetClippings(ClippingsFileDto dto)
+        public async Task<List<Clipping>> GetClippings(ClippingsDto dto)
         {
             var clippings = new List<Clipping>();
             var clipping = new Clipping();
@@ -25,14 +25,16 @@ namespace KindleToolAPI.Services
             var text = new StringBuilder();
 
             using var reader = new StreamReader(dto.File.OpenReadStream());
+            bool valid = true;
             while (reader.Peek() >= 0)
             {
                 var line = await reader.ReadLineAsync();
-
                 if (line == null)
                 {
                     line = "None";
                 }
+
+                line = line.Replace("\ufeff", "");
 
                 if (lineNumber == 1)
                 {
@@ -41,13 +43,29 @@ namespace KindleToolAPI.Services
                 else if (lineNumber == 2)
                 {
                     GetType(line, clipping);
+                    if (clipping.Type != dto.Type)
+                    {
+                        valid = false;
+                    }
+
                     GetLocation(line, clipping);
                     GetFullDate(line, clipping);
+
+                    if (!(dto.DateFrom <= clipping.Date && dto.DateTo >= clipping.Date))
+                    {
+                        valid = false;
+                    }
                 }
                 else if (line == ClippingConstants.TextSeparator)
                 {
                     clipping.Text = text.ToString();
-                    clippings.Add(clipping);
+
+                    if (valid)
+                    {
+                        clippings.Add(clipping);
+                    }
+
+                    valid = true;
                     clipping = new();
                     text.Clear();
                     lineNumber = 1;
@@ -94,19 +112,19 @@ namespace KindleToolAPI.Services
         {
             if (line.Contains("Highlight"))
             {
-                clipping.Type = ClippingTypeEnum.Highlight.ToString();
+                clipping.Type = ClippingTypeEnum.Highlight;
             }
             else if (line.Contains("Note"))
             {
-                clipping.Type = ClippingTypeEnum.Note.ToString();
+                clipping.Type = ClippingTypeEnum.Note;
             }
             else if (line.Contains("Bookmark"))
             {
-                clipping.Type = ClippingTypeEnum.Bookmark.ToString();
+                clipping.Type = ClippingTypeEnum.Bookmark;
             }
             else
             {
-                clipping.Type = ClippingTypeEnum.None.ToString();
+                clipping.Type = ClippingTypeEnum.None;
             }
         }
 
@@ -142,7 +160,7 @@ namespace KindleToolAPI.Services
                 var dateFrom = line.IndexOf("|") + "| ".Length;
                 var dateTo = line.Length - dateFrom;
 
-                var addedOn = line.Substring(dateFrom, dateTo);
+                var addedOn = line.Substring(dateFrom, dateTo).Trim();
                 clipping.AddedOn = addedOn;
 
                 GetDate(addedOn, clipping);
@@ -171,17 +189,17 @@ namespace KindleToolAPI.Services
                 var dateSplit = line.Trim().Split(' ');
                 if (!(dateSplit.Length == 3 && dateSplit[0].Length > 0 && dateSplit[1].Length > 0 && dateSplit[2].Length > 0))
                 {
-                    clipping.Date = new DateOnly();
+                    clipping.Date = new DateTime();
                 }
 
-                var month = DateOnly.ParseExact(dateSplit[1], "MMMM", CultureInfo.CurrentCulture).Month;
-                var date = new DateOnly(int.Parse(dateSplit[2]), month, int.Parse(dateSplit[0]));
+                var month = DateTime.ParseExact(dateSplit[1], "MMMM", CultureInfo.CurrentCulture).Month;
+                var date = new DateTime(int.Parse(dateSplit[2]), month, int.Parse(dateSplit[0]));
 
                 clipping.Date = date;
             }
             else
             {
-                clipping.Date = new DateOnly();
+                clipping.Date = new DateTime();
             }
         }
     }

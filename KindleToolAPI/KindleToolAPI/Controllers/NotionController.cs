@@ -9,15 +9,23 @@ namespace KindleToolAPI.Controllers
     public class NotionController : ControllerBase
     {
         private readonly INotionService _notionService;
+
         public NotionController(INotionService notionService)
         {
             _notionService = notionService;
         }
 
+        /// <summary>
+        /// Sends clippings to given notion database
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <param name="databaseId"></param>
+        /// <param name="secret"></param>
+        /// <returns></returns>
         [HttpPost("/clippings-notion")]
-        public async Task ClippingsToJson([FromForm] ClippingsFileDto dto, string secret, string databaseId)
+        public async Task AddClippingsToNotion([FromForm] ClippingsDto dto, string databaseId, string secret)
         {
-            await _notionService.AddClippingsToNotion(dto, secret, databaseId);
+            await _notionService.AddClippingsToNotion(dto, databaseId, secret);
         }
     }
 }

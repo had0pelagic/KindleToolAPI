@@ -5,6 +5,6 @@ namespace KindleToolAPI.Services
 {
     public interface IClippingsService
     {
-        public Task<List<Clipping>> GetClippings(ClippingsFileDto dto);
+        public Task<List<Clipping>> GetClippings(ClippingsDto dto);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace KindleToolAPI.Models
+﻿using KindleToolAPI.Util.Enums;
+
+namespace KindleToolAPI.Models
 {
     public class Clipping
     {
@@ -6,8 +8,8 @@
         public string Author { get; set; }
         public string Location { get; set; }
         public string AddedOn { get; set; }
-        public DateOnly Date { get; set; }
-        public string Type { get; set; }
+        public DateTime Date { get; set; }
+        public ClippingTypeEnum Type { get; set; }
         public string Text { get; set; }
     }
 }

@@ -15,7 +15,14 @@ namespace KindleToolAPI.Services
             _clippingsService = clippingsService;
         }
 
-        public async Task AddClippingsToNotion(ClippingsFileDto dto, string secret, string databaseId)
+        /// <summary>
+        /// Sends clippings to given notion database
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <param name="databaseId"></param>
+        /// <param name="secret"></param>
+        /// <returns></returns>
+        public async Task AddClippingsToNotion(ClippingsDto dto, string databaseId, string secret)
         {
             var clippings = await _clippingsService.GetClippings(dto);
 
@@ -32,7 +39,7 @@ namespace KindleToolAPI.Services
             foreach (var clipping in clippings)
             {
                 var authorTitle = $"{clipping.Title} ({clipping.Author})";
-                var childPageName = $"{clipping.Date} - {clipping.Title}";
+                var childPageName = $"{clipping.Date.ToShortDateString()} - {clipping.Title}";
 
                 var parentPageId = await _pageService.PageExistsByName(client, authorTitle);
                 if (parentPageId == null)
