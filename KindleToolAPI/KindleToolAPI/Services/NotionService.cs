@@ -1,4 +1,5 @@
 ﻿using KindleToolAPI.DTOs;
+using KindleToolAPI.Util.Constants;
 using KindleToolAPI.Util.Notion;
 using Notion.Client;
 
@@ -38,13 +39,13 @@ namespace KindleToolAPI.Services
 
             foreach (var clipping in clippings)
             {
-                var authorTitle = $"{clipping.Title} ({clipping.Author})";
+                var parentPageName = $"{clipping.Title} ({clipping.Author})";
                 var childPageName = $"{clipping.Date.ToShortDateString()} - {clipping.Title}";
 
-                var parentPageId = await _pageService.PageExistsByName(client, authorTitle);
+                var parentPageId = await _pageService.PageExistsByName(client, parentPageName);
                 if (parentPageId == null)
                 {
-                    parentPageId = await _pageService.AddPage(client, databaseId, authorTitle);
+                    parentPageId = await _pageService.AddPage(client, databaseId, parentPageName);
                 }
 
                 var childPageId = await _pageService.PageExistsByName(client, childPageName);
@@ -58,8 +59,52 @@ namespace KindleToolAPI.Services
                     continue;
                 }
 
-                await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(clipping.Text));
+                if (clipping.Text.Length > ClippingConstants.MaximumTextLength)
+                {
+                    var texts = SplitText(clipping.Text, ClippingConstants.MaximumTextLength);
+                    foreach (var text in texts)
+                    {
+                        await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(text));
+                    }
+                }
+                else
+                {
+                    await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(clipping.Text));
+                }
             }
+        }
+
+        /// <summary>
+        /// Splits given text into smaller pieces
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="maxLength"></param>
+        /// <returns></returns>
+        private static List<string> SplitText(string text, int maxLength)
+        {
+            var textList = new List<string>();
+            var textLength = text.Length;
+
+            while (true)
+            {
+                if (textList.Count == 0)
+                {
+                    textList.Add(text.Substring(0, maxLength));
+                    textLength -= maxLength;
+                }
+                else if (textLength > maxLength)
+                {
+                    textList.Add(text.Substring(textList[^1].Length * textList.Count, maxLength));
+                    textLength -= maxLength;
+                }
+                else if (textLength == maxLength || textLength < maxLength)
+                {
+                    textList.Add(text.Substring(textList[^1].Length * textList.Count, textLength));
+                    break;
+                }
+            }
+
+            return textList;
         }
     }
 }
