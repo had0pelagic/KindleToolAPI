@@ -40,5 +40,11 @@ namespace KindleToolAPI.Controllers
             var clippings = await _clippingsService.GetClippings(dto);
             return clippings;
         }
+
+        [HttpGet("/test")]
+        public async Task<ActionResult<string>> Test()
+        {
+            return Ok("test returned");
+        }
     }
 }
