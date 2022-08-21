@@ -17,7 +17,7 @@ namespace KindleToolAPI.Services
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
-        public async Task<List<Clipping>> GetClippings(ClippingsDto dto)
+        public async Task<List<Clipping>> GetClippings(IClippingsDto dto)
         {
             var clippings = new List<Clipping>();
             var clipping = new Clipping();

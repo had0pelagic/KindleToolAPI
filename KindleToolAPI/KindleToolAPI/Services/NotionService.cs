@@ -23,7 +23,7 @@ namespace KindleToolAPI.Services
         /// <param name="databaseId"></param>
         /// <param name="secret"></param>
         /// <returns></returns>
-        public async Task AddClippingsToNotion(ClippingsDto dto, string databaseId, string secret)
+        public async Task AddClippingsToNotion(ClippingsNotionDto dto)
         {
             var clippings = await _clippingsService.GetClippings(dto);
 
@@ -34,7 +34,7 @@ namespace KindleToolAPI.Services
 
             var client = NotionClientFactory.Create(new ClientOptions
             {
-                AuthToken = secret
+                AuthToken = dto.Secret
             });
 
             foreach (var clipping in clippings)
@@ -45,7 +45,7 @@ namespace KindleToolAPI.Services
                 var parentPageId = await _pageService.PageExistsByName(client, parentPageName);
                 if (parentPageId == null)
                 {
-                    parentPageId = await _pageService.AddPage(client, databaseId, parentPageName);
+                    parentPageId = await _pageService.AddPage(client, dto.DatabaseId, parentPageName);
                 }
 
                 var childPageId = await _pageService.PageExistsByName(client, childPageName);

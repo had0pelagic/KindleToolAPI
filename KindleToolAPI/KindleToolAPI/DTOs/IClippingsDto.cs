@@ -2,7 +2,7 @@
 
 namespace KindleToolAPI.DTOs
 {
-    public class ClippingsDto : IClippingsDto
+    public interface IClippingsDto
     {
         public IFormFile File { get; set; }
         public DateTime DateFrom { get; set; }
