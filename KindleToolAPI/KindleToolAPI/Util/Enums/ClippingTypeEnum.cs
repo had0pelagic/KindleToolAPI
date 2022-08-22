@@ -5,6 +5,7 @@
         Note,
         Highlight,
         Bookmark,
+        All,
         None
     }
 }

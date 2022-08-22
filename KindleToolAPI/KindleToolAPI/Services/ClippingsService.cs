@@ -1,4 +1,5 @@
 ﻿using KindleToolAPI.DTOs;
+using KindleToolAPI.Extensions;
 using KindleToolAPI.Models;
 using KindleToolAPI.Util.Constants;
 using KindleToolAPI.Util.Enums;
@@ -21,17 +22,17 @@ namespace KindleToolAPI.Services
         {
             var clippings = new List<Clipping>();
             var clipping = new Clipping();
-            var lineNumber = 1;
             var text = new StringBuilder();
+            var lineNumber = 1;
 
             using var reader = new StreamReader(dto.File.OpenReadStream());
-            bool valid = true;
-            while (reader.Peek() >= 0)
+            while (reader.Peek() > 0)
             {
                 var line = await reader.ReadLineAsync();
+
                 if (line == null)
                 {
-                    line = "None";
+                    continue;
                 }
 
                 line = line.Replace("\ufeff", "");
@@ -43,29 +44,21 @@ namespace KindleToolAPI.Services
                 else if (lineNumber == 2)
                 {
                     GetType(line, clipping);
-                    if (clipping.Type != dto.Type)
-                    {
-                        valid = false;
-                    }
-
                     GetLocation(line, clipping);
                     GetFullDate(line, clipping);
 
-                    if (!(dto.DateFrom <= clipping.Date && dto.DateTo >= clipping.Date))
+                    if (!IsDateInRange(dto, clipping) || !IsTypeCorrect(dto, clipping))
                     {
-                        valid = false;
+                        clipping = new();
+                        text.Clear();
+                        lineNumber = 1;
+                        continue;
                     }
                 }
                 else if (line == ClippingConstants.TextSeparator)
                 {
                     clipping.Text = text.ToString();
-
-                    if (valid)
-                    {
-                        clippings.Add(clipping);
-                    }
-
-                    valid = true;
+                    clippings.Add(clipping);
                     clipping = new();
                     text.Clear();
                     lineNumber = 1;
@@ -79,7 +72,18 @@ namespace KindleToolAPI.Services
                 lineNumber++;
             }
 
-            return clippings;
+            if (dto.TakeFirst && dto.Limit > 0 && clippings.Count > 0)
+            {
+                return clippings.TakeFirstN(dto.Limit).ToList();
+            }
+            else if (dto.TakeLast && dto.Limit > 0 && clippings.Count > 0)
+            {
+                return clippings.TakeLastN(dto.Limit).ToList();
+            }
+            else
+            {
+                return clippings;
+            }
         }
 
         /// <summary>
@@ -201,6 +205,28 @@ namespace KindleToolAPI.Services
             {
                 clipping.Date = new DateTime();
             }
+        }
+
+        /// <summary>
+        /// Checks if clipping date is in range of given dto's range
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <param name="clipping"></param>
+        /// <returns></returns>
+        private static bool IsDateInRange(IClippingsDto dto, Clipping clipping)
+        {
+            return dto.DateFrom <= clipping.Date && dto.DateTo >= clipping.Date;
+        }
+
+        /// <summary>
+        /// Checks if clipping type is the same as given in dto
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <param name="clipping"></param>
+        /// <returns></returns>
+        private static bool IsTypeCorrect(IClippingsDto dto, Clipping clipping)
+        {
+            return clipping.Type == dto.Type || dto.Type == ClippingTypeEnum.All;
         }
     }
 }
