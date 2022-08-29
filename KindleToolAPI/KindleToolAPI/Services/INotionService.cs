@@ -4,6 +4,6 @@ namespace KindleToolAPI.Services
 {
     public interface INotionService
     {
-        public Task AddClippingsToNotion(ClippingsNotionDto dto);
+        public Task<string> AddClippingsToNotion(ClippingsNotionDto dto);
     }
 }

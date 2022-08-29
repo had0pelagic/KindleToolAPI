@@ -23,11 +23,11 @@ namespace KindleToolAPI.Controllers
         /// <param name="secret"></param>
         /// <returns></returns>
         [HttpPost("/clippings-notion")]
-        public async Task<ActionResult<string>> AddClippingsToNotion([FromForm] ClippingsNotionDto dto )
+        public async Task<ActionResult<string>> AddClippingsToNotion([FromForm] ClippingsNotionDto dto)
         {
-            await _notionService.AddClippingsToNotion(dto);
+            var result = await _notionService.AddClippingsToNotion(dto);
 
-            return Ok("Success");
+            return Ok(result);
         }
     }
 }

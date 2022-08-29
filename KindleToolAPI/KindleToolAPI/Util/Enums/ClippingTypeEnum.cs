@@ -2,10 +2,10 @@
 {
     public enum ClippingTypeEnum
     {
+        All,
         Note,
         Highlight,
         Bookmark,
-        All,
         None
     }
 }

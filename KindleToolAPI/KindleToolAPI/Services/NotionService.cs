@@ -23,14 +23,9 @@ namespace KindleToolAPI.Services
         /// <param name="databaseId"></param>
         /// <param name="secret"></param>
         /// <returns></returns>
-        public async Task AddClippingsToNotion(ClippingsNotionDto dto)
+        public async Task<string> AddClippingsToNotion(ClippingsNotionDto dto)
         {
             var clippings = await _clippingsService.GetClippings(dto);
-
-            if (clippings.Count == 0)
-            {
-                return;
-            }
 
             var client = NotionClientFactory.Create(new ClientOptions
             {
@@ -72,6 +67,8 @@ namespace KindleToolAPI.Services
                     await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(clipping.Text));
                 }
             }
+
+            return $"Successfully uploaded {clippings.Count} clippings";
         }
 
         /// <summary>

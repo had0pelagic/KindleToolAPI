@@ -14,7 +14,7 @@ namespace KindleToolAPI.Services
         public ClippingsService() { }
 
         /// <summary>
-        /// Convert clippings file text to JSON
+        /// Gathers all clippings from clippings file and returns as a list
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
