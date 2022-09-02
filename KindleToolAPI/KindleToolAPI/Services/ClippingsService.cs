@@ -11,7 +11,12 @@ namespace KindleToolAPI.Services
 {
     public class ClippingsService : IClippingsService
     {
-        public ClippingsService() { }
+        private readonly ILogger<ClippingsService> _logger;
+
+        public ClippingsService(ILogger<ClippingsService> logger)
+        {
+            _logger = logger;
+        }
 
         /// <summary>
         /// Gathers all clippings from clippings file and returns as a list
@@ -47,8 +52,9 @@ namespace KindleToolAPI.Services
                     GetLocation(line, clipping);
                     GetFullDate(line, clipping);
 
-                    if (!IsDateInRange(dto, clipping) || !IsTypeCorrect(dto, clipping))
+                    if ((dto.DateTo != null && dto.DateFrom != null) && !IsDateInRange(dto, clipping) || !IsTypeCorrect(dto, clipping))
                     {
+                        _logger.LogInformation($"Clipping with author: [{clipping.Author}] is with wrong type/date");
                         clipping = new();
                         text.Clear();
                         lineNumber = 1;
@@ -58,6 +64,7 @@ namespace KindleToolAPI.Services
                 else if (line == ClippingConstants.TextSeparator)
                 {
                     clipping.Text = text.ToString();
+                    _logger.LogInformation($"Adding clipping with author: [{clipping.Author}]");
                     clippings.Add(clipping);
                     clipping = new();
                     text.Clear();
@@ -71,6 +78,8 @@ namespace KindleToolAPI.Services
 
                 lineNumber++;
             }
+
+            _logger.LogInformation($"Successfully gathered [{clippings.Count}] clippings");
 
             if (dto.TakeFirst && dto.Limit > 0 && clippings.Count > 0)
             {

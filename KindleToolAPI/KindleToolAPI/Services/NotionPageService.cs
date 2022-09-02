@@ -5,6 +5,12 @@ namespace KindleToolAPI.Services
 {
     public class NotionPageService : INotionPageService
     {
+        private readonly ILogger<NotionPageService> _logger;
+
+        public NotionPageService(ILogger<NotionPageService> logger)
+        {
+            _logger = logger;
+        }
 
         /// <summary>
         /// Adds new page to database with given name
@@ -33,6 +39,7 @@ namespace KindleToolAPI.Services
                 }
             }).Build();
 
+            _logger.LogInformation($"Adding page with {titleName} name");
             var page = await client.Pages.CreateAsync(pageCreateParameters);
 
             return page.Id;
@@ -65,6 +72,7 @@ namespace KindleToolAPI.Services
                 }
             }).Build();
 
+            _logger.LogInformation($"Adding child page of [{parentPageId}] with [{titleName}] name");
             var page = await client.Pages.CreateAsync(pageCreateParameters);
 
             return page.Id;

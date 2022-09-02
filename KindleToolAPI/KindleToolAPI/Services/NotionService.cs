@@ -9,11 +9,13 @@ namespace KindleToolAPI.Services
     {
         private readonly INotionPageService _pageService;
         private readonly IClippingsService _clippingsService;
+        private readonly ILogger<NotionService> _logger;
 
-        public NotionService(INotionPageService pageService, IClippingsService clippingsService)
+        public NotionService(INotionPageService pageService, IClippingsService clippingsService, ILogger<NotionService> logger)
         {
             _pageService = pageService;
             _clippingsService = clippingsService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -26,6 +28,8 @@ namespace KindleToolAPI.Services
         public async Task<string> AddClippingsToNotion(ClippingsNotionDto dto)
         {
             var clippings = await _clippingsService.GetClippings(dto);
+
+            _logger.LogInformation($"{GetType().Name} received {clippings.Count} clippings");
 
             var client = NotionClientFactory.Create(new ClientOptions
             {
@@ -40,17 +44,20 @@ namespace KindleToolAPI.Services
                 var parentPageId = await _pageService.PageExistsByName(client, parentPageName);
                 if (parentPageId == null)
                 {
+                    _logger.LogInformation($"Adding new parent page with [{parentPageName}] name");
                     parentPageId = await _pageService.AddPage(client, dto.DatabaseId, parentPageName);
                 }
 
                 var childPageId = await _pageService.PageExistsByName(client, childPageName);
                 if (childPageId == null)
                 {
+                    _logger.LogInformation($"Adding new child page with [{childPageName}] name");
                     childPageId = await _pageService.AddChildPage(client, parentPageId, childPageName);
                 }
 
                 if (await _pageService.ContainsDuplicateParagraph(client, childPageId, clipping.Text))
                 {
+                    _logger.LogInformation($"Child page with [{childPageId}] id contains duplicate text");
                     continue;
                 }
 
@@ -59,16 +66,21 @@ namespace KindleToolAPI.Services
                     var texts = SplitText(clipping.Text, ClippingConstants.MaximumTextLength);
                     foreach (var text in texts)
                     {
+                        _logger.LogInformation($"Appending block to page with [{childPageId}] id");
                         await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(text));
                     }
                 }
                 else
                 {
+                    _logger.LogInformation($"Appending block to page with [{childPageId}] id");
                     await _pageService.AppendBlockToPage(client, childPageId, Blocks.GetParagraphBlock(clipping.Text));
                 }
             }
 
-            return $"Successfully uploaded {clippings.Count} clippings";
+            var message = $"Successfully uploaded [{clippings.Count}] clippings";
+            _logger.LogInformation(message);
+
+            return message;
         }
 
         /// <summary>

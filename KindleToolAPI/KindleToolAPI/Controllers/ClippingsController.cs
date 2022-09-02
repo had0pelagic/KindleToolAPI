@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KindleToolAPI.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class ClippingsController : ControllerBase
     {
@@ -25,8 +25,9 @@ namespace KindleToolAPI.Controllers
         [HttpPost("/clippings-json-file")]
         public async Task<FileContentResult> ClippingsToJsonFile([FromForm] ClippingsDto dto)
         {
-            var clippings = await _clippingsService.GetClippings(dto);
-            return clippings.ToTextFile("ClippingsJson");
+            var result = await _clippingsService.GetClippings(dto);
+
+            return result.ToTextFile("ClippingsJson");
         }
 
         /// <summary>
@@ -37,8 +38,9 @@ namespace KindleToolAPI.Controllers
         [HttpPost("/clippings-json")]
         public async Task<List<Clipping>> ClippingsToJson([FromForm] ClippingsDto dto)
         {
-            var clippings = await _clippingsService.GetClippings(dto);
-            return clippings;
+            var result = await _clippingsService.GetClippings(dto);
+
+            return result;
         }
 
         [HttpGet("/test")]
