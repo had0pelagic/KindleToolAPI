@@ -1,10 +1,36 @@
+using KindleToolAPI.Middleware;
 using KindleToolAPI.Services;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme()
+    {
+        Description = "API KEY",
+        Name = "ApiKey",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                }
+            },
+            Array.Empty<string>()
+        },
+    });
+});
 builder.Services.AddScoped<IClippingsService, ClippingsService>();
 builder.Services.AddScoped<INotionService, NotionService>();
 builder.Services.AddScoped<INotionDatabaseService, NotionDatabaseService>();
@@ -29,9 +55,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors("Cors");
+
+app.UseMiddleware<ApiKeyMiddleware>();
+
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
