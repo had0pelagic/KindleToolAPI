@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KindleToolAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")]
     public class NotionController : ControllerBase
     {
         private readonly INotionService _notionService;
@@ -22,7 +23,7 @@ namespace KindleToolAPI.Controllers
         /// <param name="databaseId"></param>
         /// <param name="secret"></param>
         /// <returns></returns>
-        [HttpPost("/clippings-notion")]
+        [HttpPost()]
         public async Task<ActionResult<string>> AddClippingsToNotion([FromForm] ClippingsNotionDto dto)
         {
             var result = await _notionService.AddClippingsToNotion(dto);

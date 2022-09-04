@@ -1,14 +1,15 @@
 using KindleToolAPI.Middleware;
 using KindleToolAPI.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme()
+    options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme()
     {
         Description = "API KEY",
         Name = "ApiKey",
@@ -16,7 +17,7 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
     {
         {
             new OpenApiSecurityScheme
@@ -35,7 +36,17 @@ builder.Services.AddScoped<IClippingsService, ClippingsService>();
 builder.Services.AddScoped<INotionService, NotionService>();
 builder.Services.AddScoped<INotionDatabaseService, NotionDatabaseService>();
 builder.Services.AddScoped<INotionPageService, NotionPageService>();
-builder.Services.AddCors(c => c.AddPolicy("Cors", policy =>
+
+builder.Services.AddRouting(opts => opts.LowercaseUrls = true);
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+});
+
+builder.Services.AddCors(options => options.AddPolicy("Cors", policy =>
 {
     policy.AllowAnyHeader();
     policy.AllowAnyMethod();
@@ -49,9 +60,9 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(option =>
+    app.UseSwaggerUI(options =>
     {
-        option.DocumentTitle = "KindleToolAPI";
+        options.DocumentTitle = "KindleToolAPI";
     });
 }
 
