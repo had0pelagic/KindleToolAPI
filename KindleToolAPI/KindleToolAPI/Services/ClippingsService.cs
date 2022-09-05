@@ -51,15 +51,6 @@ namespace KindleToolAPI.Services
                     GetType(line, clipping);
                     GetLocation(line, clipping);
                     GetFullDate(line, clipping);
-
-                    if ((dto.DateTo != null && dto.DateFrom != null) && !IsDateInRange(dto, clipping) || !IsTypeCorrect(dto, clipping))
-                    {
-                        _logger.LogInformation($"Clipping with author: [{clipping.Author}] is with wrong type/date");
-                        clipping = new();
-                        text.Clear();
-                        lineNumber = 1;
-                        continue;
-                    }
                 }
                 else if (line == ClippingConstants.TextSeparator)
                 {
@@ -78,6 +69,8 @@ namespace KindleToolAPI.Services
 
                 lineNumber++;
             }
+
+            clippings = clippings.Where(clipping => IsDateInRange(dto, clipping) && IsTypeCorrect(dto, clipping)).ToList();
 
             _logger.LogInformation($"Successfully gathered [{clippings.Count}] clippings");
 
@@ -224,6 +217,11 @@ namespace KindleToolAPI.Services
         /// <returns></returns>
         private static bool IsDateInRange(IClippingsDto dto, Clipping clipping)
         {
+            if (dto.DateFrom == null && dto.DateTo == null)
+            {
+                return true;
+            }
+
             return dto.DateFrom <= clipping.Date && dto.DateTo >= clipping.Date;
         }
 
